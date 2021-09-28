@@ -18,6 +18,7 @@
     FlutterMethodChannel *_methodChannel;
     BetterEventChannel *_eventChannel;
     BetterEventChannel *_dataEventChannel;
+    BetterEventChannel *_ampChannel;
     NSString *_playerId;
     AVQueuePlayer *_player;
     AudioSource *_audioSource;
@@ -60,6 +61,9 @@
            messenger:[registrar messenger]];
     _dataEventChannel = [[BetterEventChannel alloc]
         initWithName:[NSMutableString stringWithFormat:@"com.ryanheise.just_audio.data.%@", _playerId]
+           messenger:[registrar messenger]];
+    _ampChannel = [[BetterEventChannel alloc]
+        initWithName:[NSMutableString stringWithFormat:@"com.ryanheise.just_audio.amp.%@", _playerId]
            messenger:[registrar messenger]];
     _index = 0;
     _processingState = none;
@@ -328,6 +332,10 @@
             @"duration": @([self getDurationMicroseconds]),
             @"currentIndex": @(_index),
     }];
+}
+
+- (void)broadcastAmpData: (float) amp {
+    [_ampChannel sendEvent: @(amp)];
 }
 
 - (int)getCurrentPosition {
@@ -1391,6 +1399,7 @@ void process(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
     // Untested:
     [_eventChannel dispose];
     [_dataEventChannel dispose];
+    [_ampChannel dispose];
     [_methodChannel setMethodCallHandler:nil];
 }
 
