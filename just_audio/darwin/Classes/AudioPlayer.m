@@ -775,52 +775,67 @@ void unprepare(MTAudioProcessingTapRef tap)
 #define LAKE_RIGHT_CHANNEL (1)
  
 void process(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
- MTAudioProcessingTapFlags flags, AudioBufferList *bufferListInOut,
- CMItemCount *numberFramesOut, MTAudioProcessingTapFlags *flagsOut)
+             MTAudioProcessingTapFlags flags, AudioBufferList *bufferListInOut,
+             CMItemCount *numberFramesOut, MTAudioProcessingTapFlags *flagsOut)
 {
-  OSStatus err = MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut,
-                 flagsOut, NULL, numberFramesOut);
-  if (err) NSLog(@"Error from GetSourceAudio: %d", err);
-  AudioBuffer* pBuffer = &bufferListInOut->mBuffers[0];
-  Float32* pData = (Float32*)pBuffer->mData;
-  UInt32 pDataSize = pBuffer->mDataByteSize;
-  float sum = 0.0;
-  for (UInt32 i = 1; i < pDataSize; i *= 50) {
-    sum += fabsf(pData[i]);
-  }
-  sum /= pDataSize;
-  sum = sqrt(sum) * 100;
-  NSLog(@"%g", sum);
+    OSStatus err = MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut, NULL, numberFramesOut);
+    if (err) {
+        NSLog(@"Error from GetSourceAudio: %d", err);
+        return;
+    }
+    float* arr = calloc(bufferListInOut->mNumberBuffers, sizeof(float));
+    for (int j = 0; j < bufferListInOut->mNumberBuffers; j++) {
+        AudioBuffer* pBuffer = &bufferListInOut->mBuffers[j];
+        Float32* pData = (Float32*)pBuffer->mData;
+        UInt32 pDataSize = pBuffer->mDataByteSize;
+        float amp = 0.0;
+        for (UInt32 i = 1; i < pDataSize; i *= 50) {
+            amp += fabsf(pData[i]);
+        }
+        amp /= pDataSize;
+        arr[j] = amp;
+    }
+    float amp = 0.0;
+    for (int i = 0; i < bufferListInOut->mNumberBuffers; i++) {
+        amp += arr[i];
+    }
+    free(arr); arr = NULL;
+    amp /= bufferListInOut->mNumberBuffers;
+    amp = MIN(sqrt(amp) * 100, 1.f); // Clamp the final value of amplitude between 0 and 1
+    AudioPlayer* player = (__bridge AudioPlayer*)MTAudioProcessingTapGetStorage(tap);
+    [player broadcastAmpData:amp];
 }
 
-- (void) installTap: (AVPlayerItem*) playerItem {
-  MTAudioProcessingTapCallbacks callbacks;
-  callbacks.version = kMTAudioProcessingTapCallbacksVersion_0;
-  callbacks.clientInfo = (__bridge void*)self;
-  callbacks.init = init;
-  callbacks.finalize = finalize;
-  callbacks.prepare = prepare;
-  callbacks.unprepare = unprepare;
-  callbacks.process = process;
-  MTAudioProcessingTapRef tap;
-  OSStatus err = MTAudioProcessingTapCreate(kCFAllocatorDefault, &callbacks, kMTAudioProcessingTapCreationFlag_PostEffects, &tap);
-  NSAssert(err == noErr, @"Error occured");
-  AVAssetTrack* audioTrack = [[[playerItem asset] tracksWithMediaType:AVMediaTypeAudio] firstObject];
-  AVMutableAudioMixInputParameters* inputParams = [AVMutableAudioMixInputParameters audioMixInputParametersWithTrack:audioTrack];
-  inputParams.audioTapProcessor = tap;
-  AVMutableAudioMix* audioMix = [AVMutableAudioMix audioMix];
-  audioMix.inputParameters = @[inputParams];
-  playerItem.audioMix = audioMix;
+- (void) installTap: (AVPlayerItem*) playerItem
+{
+    MTAudioProcessingTapCallbacks callbacks;
+    callbacks.version = kMTAudioProcessingTapCallbacksVersion_0;
+    callbacks.clientInfo = (__bridge void*)self;
+    callbacks.init = init;
+    callbacks.finalize = finalize;
+    callbacks.prepare = prepare;
+    callbacks.unprepare = unprepare;
+    callbacks.process = process;
+    MTAudioProcessingTapRef tap;
+    OSStatus err = MTAudioProcessingTapCreate(kCFAllocatorDefault, &callbacks, kMTAudioProcessingTapCreationFlag_PostEffects, &tap);
+    NSAssert(err == noErr, @"Error occured");
+    AVAssetTrack* audioTrack = [[[playerItem asset] tracksWithMediaType:AVMediaTypeAudio] firstObject];
+    AVMutableAudioMixInputParameters* inputParams = [AVMutableAudioMixInputParameters audioMixInputParametersWithTrack:audioTrack];
+    inputParams.audioTapProcessor = tap;
+    AVMutableAudioMix* audioMix = [AVMutableAudioMix audioMix];
+    audioMix.inputParameters = @[inputParams];
+    playerItem.audioMix = audioMix;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary<NSString *,id> *)change
-                       context:(void *)context {
-  if ([keyPath isEqualToString:@"tracks"]) {
-    IndexedPlayerItem *playerItem = (IndexedPlayerItem *)object;
-    [self installTap:playerItem];
-  } else if ([keyPath isEqualToString:@"status"]) {
+                       context:(void *)context
+{
+    if ([keyPath isEqualToString:@"tracks"]) {
+        IndexedPlayerItem *playerItem = (IndexedPlayerItem *)object;
+        [self installTap:playerItem];
+    } else if ([keyPath isEqualToString:@"status"]) {
         IndexedPlayerItem *playerItem = (IndexedPlayerItem *)object;
         AVPlayerItemStatus status = AVPlayerItemStatusUnknown;
         NSNumber *statusNumber = change[NSKeyValueChangeNewKey];
