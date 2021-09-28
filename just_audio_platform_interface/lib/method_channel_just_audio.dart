@@ -46,6 +46,12 @@ class MethodChannelAudioPlayer extends AudioPlayerPlatform {
               PlayerDataMessage.fromMap(map as Map<dynamic, dynamic>));
 
   @override
+  Stream<double> get ampStream =>
+      EventChannel('com.ryanheise.just_audio.amp.$id')
+          .receiveBroadcastStream()
+          .cast<double>();
+
+  @override
   Future<LoadResponse> load(LoadRequest request) async {
     return LoadResponse.fromMap((await _channel
         .invokeMethod<Map<dynamic, dynamic>>('load', request.toMap()))!);

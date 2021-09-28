@@ -70,6 +70,8 @@ abstract class AudioPlayerPlatform {
   Stream<PlayerDataMessage> get playerDataMessageStream =>
       Stream<PlayerDataMessage>.empty();
 
+  Stream<double> get ampStream => Stream<double>.empty();
+
   /// Loads an audio source.
   Future<LoadResponse> load(LoadRequest request) {
     throw UnimplementedError("load() has not been implemented.");

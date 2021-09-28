@@ -73,6 +73,8 @@ class AudioPlayer {
   /// subscribe to the new platform's events.
   StreamSubscription? _playerDataSubscription;
 
+  StreamSubscription? _ampSubscription;
+
   final String _id;
   _ProxyHttpServer? _proxy;
   AudioSource? _audioSource;
@@ -83,6 +85,7 @@ class AudioPlayer {
 
   PlaybackEvent _playbackEvent = PlaybackEvent();
   final _playbackEventSubject = BehaviorSubject<PlaybackEvent>(sync: true);
+  final _ampSubject = BehaviorSubject<double>.seeded(0.0);
   Future<Duration?>? _durationFuture;
   final _durationSubject = BehaviorSubject<Duration?>();
   final _processingStateSubject = BehaviorSubject<ProcessingState>();
@@ -300,6 +303,8 @@ class AudioPlayer {
 
   /// A stream of [PlaybackEvent]s.
   Stream<PlaybackEvent> get playbackEventStream => _playbackEventSubject.stream;
+
+  Stream<double> get ampStream => _ampSubject.stream;
 
   /// The duration of the current audio or `null` if unknown.
   Duration? get duration => _playbackEvent.duration;
@@ -1174,6 +1179,9 @@ class AudioPlayer {
     final audioSource = _audioSource;
 
     void subscribeToEvents(AudioPlayerPlatform platform) {
+      _ampSubscription = platform.ampStream.listen((amp) {
+        _ampSubject.add(amp);
+      });
       _playerDataSubscription =
           platform.playerDataMessageStream.listen((message) {
         if (message.playing != null && message.playing != playing) {
@@ -1247,6 +1255,7 @@ class AudioPlayer {
     Future<AudioPlayerPlatform> setPlatform() async {
       _playbackEventSubscription?.cancel();
       _playerDataSubscription?.cancel();
+      _ampSubscription?.cancel();
       if (!force) {
         final oldPlatform = _platformValue!;
         if (!(oldPlatform is _IdleAudioPlayer)) {
