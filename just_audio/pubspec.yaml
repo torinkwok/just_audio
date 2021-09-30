@@ -10,19 +10,19 @@ environment:
 
 dependencies:
   # just_audio_platform_interface: ^4.0.0
-  just_audio_platform_interface:
-    path: ../just_audio_platform_interface
   # just_audio_platform_interface:
-  #   git:
-  #     url: https://github.com/torinkwok/just_audio.git
-  #     path: just_audio_platform_interface/
+  #   path: ../just_audio_platform_interface
+  just_audio_platform_interface:
+    git:
+      url: https://github.com/torinkwok/just_audio.git
+      path: just_audio_platform_interface/
   # just_audio_web: ^0.4.2
-  just_audio_web:
-    path: ../just_audio_web
   # just_audio_web:
-  #   git:
-  #     url: https://github.com/torinkwok/just_audio.git
-  #     path: just_audio_web/
+  #   path: ../just_audio_web
+  just_audio_web:
+    git:
+      url: https://github.com/torinkwok/just_audio.git
+      path: just_audio_web/
   audio_session: ^0.1.6
   rxdart: '>=0.26.0 <0.28.0'
   path: ^1.8.0

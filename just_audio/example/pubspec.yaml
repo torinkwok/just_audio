@@ -13,8 +13,12 @@ dependencies:
   # just_audio_libwinmedia: ^0.0.3
   # just_audio_libwinmedia:
   #   path: ../../../just_audio_libwinmedia
+  # just_audio:
+  #   path: ../
   just_audio:
-    path: ../
+    git:
+      url: https://github.com/torinkwok/just_audio.git
+      path: just_audio/
 
 # Uncomment when testing platform interface changes.
 # dependency_overrides:

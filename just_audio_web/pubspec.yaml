@@ -13,12 +13,12 @@ flutter:
 
 dependencies:
   # just_audio_platform_interface: ^4.0.0
-  just_audio_platform_interface:
-    path: ../just_audio_platform_interface
   # just_audio_platform_interface:
-  #   git:
-  #     url: https://github.com/torinkwok/just_audio.git
-  #     path: just_audio_platform_interface/
+  #   path: ../just_audio_platform_interface
+  just_audio_platform_interface:
+    git:
+      url: https://github.com/torinkwok/just_audio.git
+      path: just_audio_platform_interface/
   flutter:
     sdk: flutter
   flutter_web_plugins:

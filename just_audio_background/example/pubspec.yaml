@@ -11,9 +11,17 @@ dependencies:
   audio_session: ^0.1.5
   rxdart: '^0.27.0'
   just_audio:
-    path: ../../just_audio
+    git:
+      url: https://github.com/torinkwok/just_audio.git
+      path: just_audio/
+  # just_audio:
+  #   path: ../../just_audio
+  # just_audio_background:
+  #   path: ..
   just_audio_background:
-    path: ..
+    git:
+      url: https://github.com/torinkwok/just_audio.git
+      path: just_audio_background/
 
 # Uncomment when testing platform interface changes.
 # dependency_overrides:
